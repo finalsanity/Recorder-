@@ -31,9 +31,9 @@ export interface GraphProvider {
 export class MockGraphProvider implements GraphProvider {
   async getCurrentUser() {
     return {
-      id: "mock-jordan",
-      name: "Jordan Davis",
-      email: "jordan.davis@northstar.dev",
+      id: process.env.MOCK_USER_ID ?? "local-user",
+      name: process.env.MOCK_USER_NAME ?? "Local QA User",
+      email: process.env.MOCK_USER_EMAIL ?? "local.qa@example.test",
     };
   }
   async ensureRootFolder() {

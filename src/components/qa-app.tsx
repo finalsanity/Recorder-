@@ -236,9 +236,11 @@ export default function QAApp() {
   const [mic, setMic] = useState(true);
   const [systemAudio, setSystemAudio] = useState(true);
   const [elapsed, setElapsed] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordingBlobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     if (recordState !== "recording") return;
@@ -251,8 +253,9 @@ export default function QAApp() {
   useEffect(
     () => () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     },
-    [],
+    [previewUrl],
   );
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -290,7 +293,9 @@ export default function QAApp() {
       });
       streamRef.current = stream;
       stream.getVideoTracks()[0].addEventListener("ended", () => {
-        if (recordState === "recording") stopRecording();
+        if (recorderRef.current && recorderRef.current.state !== "inactive") {
+          recorderRef.current.stop();
+        }
       });
       if (mic) {
         try {
@@ -311,6 +316,14 @@ export default function QAApp() {
       };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(chunksRef.current, {
+          type: recorder.mimeType || "video/webm",
+        });
+        recordingBlobRef.current = blob;
+        setPreviewUrl((currentUrl) => {
+          if (currentUrl) URL.revokeObjectURL(currentUrl);
+          return URL.createObjectURL(blob);
+        });
         setRecordState("processing");
         window.setTimeout(() => {
           setRecordState("ready");
@@ -408,10 +421,11 @@ export default function QAApp() {
         <div className="mt-auto rounded-2xl border border-[var(--line)] bg-white p-4">
           <div className="flex items-center gap-2 text-xs font-bold">
             <span className="h-2 w-2 rounded-full bg-[var(--success)]" />{" "}
-            OneDrive connected
+            OneDrive development mode
           </div>
           <p className="mt-2 text-[11px] leading-4 text-[var(--muted)]">
-            Files save securely to your company drive.
+            Mock provider active. Live OneDrive needs Entra and Graph
+            configuration.
           </p>
           <button className="mt-3 text-[11px] font-bold text-[var(--blue)]">
             Manage connection <ArrowUpRight className="inline" size={12} />
@@ -422,7 +436,7 @@ export default function QAApp() {
             JD
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold">Jordan Davis</p>
+            <p className="truncate text-xs font-bold">Local QA User</p>
             <p className="truncate text-[11px] text-[var(--muted)]">
               QA Engineer
             </p>
@@ -704,9 +718,9 @@ export default function QAApp() {
                       JD
                     </div>
                     <div>
-                      <p className="font-bold">Jordan Davis</p>
+                      <p className="font-bold">Local QA User</p>
                       <p className="text-sm text-[var(--muted)]">
-                        jordan.davis@northstar.dev
+                        local.qa@example.test
                       </p>
                     </div>
                     <span className="ml-auto rounded-lg bg-[var(--success-soft)] px-3 py-2 text-xs font-bold text-[var(--success)]">
@@ -1011,11 +1025,21 @@ export default function QAApp() {
               </button>
             </div>
             <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--line)] bg-[#d9dee0]">
-              <div className="flex h-36 items-center justify-center">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow">
-                  <Play size={17} fill="currentColor" />
-                </span>
-              </div>
+              {previewUrl ? (
+                <video
+                  className="h-36 w-full bg-black object-contain"
+                  controls
+                  preload="metadata"
+                  src={previewUrl}
+                  aria-label="Recording preview"
+                />
+              ) : (
+                <div className="flex h-36 items-center justify-center">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow">
+                    <Play size={17} fill="currentColor" />
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between bg-white/80 px-4 py-3 text-xs font-semibold">
                 <span>Preview ready · {formatTime(elapsed)}</span>
                 <span>

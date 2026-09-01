@@ -13,7 +13,7 @@ const evidenceSchema = z.object({
 });
 
 function currentUserId() {
-  return "mock-jordan";
+  return process.env.MOCK_USER_ID ?? "local-user";
 }
 
 export async function GET() {
