@@ -1,0 +1,110 @@
+revolte:
+  version: '1'
+  project: Recorder Initial
+  appName: Capture App
+  env:
+    preview:
+      services:
+        rid_1:
+          name: capture-app
+          type: WEB_SERVICE
+          entryPoint: src/app/page.tsx
+          specifications:
+            cpu: 2
+            memory: 2
+            storage: 30
+          properties:
+            port: 8080
+            health: /api/health
+            loadBalancerMode: shared
+            variables:
+              NODE_ENV: production
+              PORT: '8080'
+              AUTH_MODE: mock
+              GRAPH_MODE: mock
+              AUTH_SECRET: '#{AUTH_SECRET}'
+              MICROSOFT_CLIENT_ID: ''
+              MICROSOFT_TENANT_ID: ''
+              MICROSOFT_REDIRECT_URI: ''
+              DATABASE_URL: '#{database.dbConnectionString}'
+        rid_2:
+          name: database
+          type: DATABASE
+          specifications:
+            engine: mysql
+            cpu: 2
+            memory: 1
+            storage: 30
+    qa:
+      branch: qa
+      services:
+        rid_1:
+          name: capture-app
+          type: WEB_SERVICE
+          entryPoint: src/app/page.tsx
+          specifications:
+            cpu: 2
+            memory: 2
+            storage: 30
+          properties:
+            port: 8080
+            health: /api/health
+            loadBalancerMode: shared
+        rid_2:
+          name: database
+          type: DATABASE
+          specifications:
+            engine: mysql
+            cpu: 2
+            memory: 1
+            storage: 30
+    staging:
+      branch: staging
+      services:
+        rid_1:
+          name: capture-app
+          type: WEB_SERVICE
+          entryPoint: src/app/page.tsx
+          specifications:
+            cpu: 2
+            memory: 2
+            storage: 30
+          properties:
+            port: 8080
+            health: /api/health
+            loadBalancerMode: shared
+        rid_2:
+          name: database
+          type: DATABASE
+          specifications:
+            engine: mysql
+            cpu: 2
+            memory: 1
+            storage: 30
+    production:
+      branch: main
+      services:
+        rid_1:
+          name: capture-app
+          type: WEB_SERVICE
+          entryPoint: src/app/page.tsx
+          specifications:
+            cpu: 2
+            memory: 2
+            storage: 50
+            autoScaling:
+              replica:
+                min: 1
+                max: 3
+          properties:
+            port: 8080
+            health: /api/health
+            loadBalancerMode: shared
+        rid_2:
+          name: database
+          type: DATABASE
+          specifications:
+            engine: mysql
+            cpu: 2
+            memory: 1
+            storage: 30
